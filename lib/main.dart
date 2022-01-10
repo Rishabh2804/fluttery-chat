@@ -35,7 +35,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.clear();
     
   }
-
+ 
   Widget _buildTextComposer() {
     return Container(
         margin: const EdgeInsets.symmetric(horizontal: 8.0),
