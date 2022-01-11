@@ -31,8 +31,6 @@ class ChatMessage extends StatelessWidget {
   final String text;
   final String _name = 'You';
 
-
-
   @override
   Widget build(BuildContext context) {
     return Container(
