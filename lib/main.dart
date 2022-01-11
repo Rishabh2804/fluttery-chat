@@ -1,3 +1,6 @@
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -6,6 +9,17 @@ void main() {
   );
 }
 
+final ThemeData kIOSTheme = ThemeData(
+  primarySwatch: Colors.orange,
+  primaryColor: Colors.grey[100],
+  primaryColorBrightness: Brightness.light,
+);
+
+final ThemeData kDefaultTheme = ThemeData(
+  colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.purple)
+      .copyWith(secondary: Colors.orangeAccent[400]),
+);
+
 class FlutteryChatApp extends StatelessWidget {
   const FlutteryChatApp({
     Key? key,
@@ -13,11 +27,14 @@ class FlutteryChatApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      scrollBehavior: MaterialScrollBehavior(),
+    return MaterialApp(
+      scrollBehavior: const MaterialScrollBehavior(),
       debugShowCheckedModeBanner: false,
       title: 'FlutteryChat',
-      home: ChatScreen(),
+      theme: defaultTargetPlatform == TargetPlatform.iOS
+          ? kIOSTheme
+          : kDefaultTheme,
+      home: const ChatScreen(),
     );
   }
 }
@@ -25,36 +42,50 @@ class FlutteryChatApp extends StatelessWidget {
 class ChatMessage extends StatelessWidget {
   const ChatMessage({
     required this.text,
+    required this.animationController,
     Key? key,
   }) : super(key: key);
 
   final String text;
   final String _name = 'You';
-
+  final AnimationController animationController;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 30.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(child: Text(_name[0])),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return FadeTransition(
+      opacity: animationController,
+      child: SizeTransition(
+        sizeFactor: CurvedAnimation(
+            parent: animationController, curve: Curves.decelerate),
+        axisAlignment: 0.0,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 30.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(_name, style: Theme.of(context).textTheme.headline4),
               Container(
-                margin: const EdgeInsets.only(top: 5.0),
-                child: Text(text),
+                margin: const EdgeInsets.only(right: 16.0),
+                child: CircleAvatar(
+                    child:
+                        Text(_name[0], style: const TextStyle(fontSize: 24.0))),
               ),
+              Expanded(
+                // flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_name, style: Theme.of(context).textTheme.headline5),
+                    Container(
+                      margin: const EdgeInsets.only(top: 5.0),
+                      child: Text(text),
+                    ),
+                  ],
+                ),
+              )
             ],
-          )
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -67,30 +98,48 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final List<ChatMessage> _messages = [];
   final _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  bool _isComposing = false;
+
+  @override
+  void dispose() {
+    for (var message in _messages) {
+      message.animationController.dispose();
+    }
+    super.dispose();
+  }
 
   void _handleSubmitted(String text) {
-    if (text.isEmpty) {
-      _focusNode.requestFocus();
-      return;
-    }
+    // if (text.isEmpty) {
+    //   _focusNode.requestFocus();
+    //   return;
+    // }
     _textController.clear();
     var message = ChatMessage(
       text: text,
+      animationController: AnimationController(
+        duration: const Duration(milliseconds: 700),
+        vsync: this,
+      ),
     );
     setState(() {
       _messages.insert(0, message);
+      _isComposing = false;
     });
     _focusNode.requestFocus();
+    message.animationController.forward();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('FlutteryChat')),
+      appBar: AppBar(
+        title: const Text('FlutteryChat'),
+        elevation: Theme.of(context).platform == TargetPlatform.iOS ? 0.0 : 4.0,
+      ),
       body: Column(
         children: [
           Flexible(
@@ -120,16 +169,28 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Flexible(
               child: TextField(
+                selectionHeightStyle: BoxHeightStyle.max,
                 mouseCursor: MaterialStateMouseCursor.textable,
+                focusNode: _focusNode,
                 controller: _textController,
                 scrollController: ScrollController(),
-                onSubmitted: _handleSubmitted,
-                decoration:
-                    const InputDecoration.collapsed(hintText: 'Send a message'),
-                keyboardType: TextInputType.multiline,
+                onSubmitted: _isComposing ? _handleSubmitted : null,
+                onChanged: (text) {
+                  setState(() {
+                    _isComposing = text.isNotEmpty;
+                    _focusNode.requestFocus();
+                  });
+                },
+                onEditingComplete: _focusNode.requestFocus,
+                decoration: const InputDecoration.collapsed(
+                  hintText: 'Send a message',
+                  // filled: true,
+                  // fillColor: Colors.greenAccent,
+                ),
                 textInputAction: TextInputAction.newline,
                 autofocus: true,
-                focusNode: _focusNode,
+                enableSuggestions: true,
+                autocorrect: true,
               ),
             ),
             Container(
@@ -138,7 +199,9 @@ class _ChatScreenState extends State<ChatScreen> {
               child: IconButton(
                 visualDensity: VisualDensity.comfortable,
                 icon: const Icon(Icons.send),
-                onPressed: () => _handleSubmitted(_textController.text),
+                onPressed: _isComposing
+                    ? () => _handleSubmitted(_textController.text)
+                    : null,
                 // hoverColor: Colors.accents[11],
                 // autofocus: true,
                 mouseCursor: MaterialStateMouseCursor.clickable,
