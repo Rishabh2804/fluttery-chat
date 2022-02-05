@@ -41,12 +41,12 @@ class FlutteryChatApp extends StatelessWidget {
 
 class ChatMessage extends StatelessWidget {
   const ChatMessage({
-    required this.text,
+    required this.msg,
     required this.animationController,
     Key? key,
   }) : super(key: key);
 
-  final String text;
+  final String msg;
   final String _name = 'You';
   final AnimationController animationController;
 
@@ -62,7 +62,7 @@ class ChatMessage extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 30.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
                 margin: const EdgeInsets.only(right: 16.0),
@@ -73,12 +73,12 @@ class ChatMessage extends StatelessWidget {
               Expanded(
                 // flex: 1,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(_name, style: Theme.of(context).textTheme.headline5),
                     Container(
                       margin: const EdgeInsets.only(top: 5.0),
-                      child: Text(text),
+                      child: Text(msg),
                     ),
                   ],
                 ),
@@ -119,7 +119,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     // }
     _textController.clear();
     var message = ChatMessage(
-      text: text,
+      msg: text,
       animationController: AnimationController(
         duration: const Duration(milliseconds: 700),
         vsync: this,
@@ -196,19 +196,25 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             Container(
               margin:
                   const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
-              child: IconButton(
-                visualDensity: VisualDensity.comfortable,
-                icon: const Icon(Icons.send),
-                onPressed: _isComposing
-                    ? () => _handleSubmitted(_textController.text)
-                    : null,
-                // hoverColor: Colors.accents[11],
-                // autofocus: true,
-                mouseCursor: MaterialStateMouseCursor.clickable,
-                // focusColor: Colors.cyan,
-                color: Colors.cyan[600],
-                // splashColor: Colors.tealAccent,
-              ),
+              child: Theme.of(context).platform == TargetPlatform.iOS
+                  ? CupertinoButton(
+                      child: const Text('Send'),
+                      onPressed: _isComposing
+                          ? () => _handleSubmitted(_textController.text)
+                          : null)
+                  : IconButton(
+                      visualDensity: VisualDensity.comfortable,
+                      icon: const Icon(Icons.send),
+                      onPressed: _isComposing
+                          ? () => _handleSubmitted(_textController.text)
+                          : null,
+                      // hoverColor: Colors.accents[11],
+                      // autofocus: true,
+                      mouseCursor: MaterialStateMouseCursor.clickable,
+                      // focusColor: Colors.cyan,
+                      color: Colors.cyan[600],
+                      // splashColor: Colors.tealAccent,
+                    ),
             )
           ],
         ),
