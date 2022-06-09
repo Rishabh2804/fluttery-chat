@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ void main() {
 final ThemeData kIOSTheme = ThemeData(
   primarySwatch: Colors.orange,
   primaryColor: Colors.grey[100],
-  primaryColorBrightness: Brightness.light,
+  // primaryColorBrightness: Brightness.light,
 );
 
 final ThemeData kDefaultTheme = ThemeData(
@@ -67,22 +68,27 @@ class ChatMessage extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.only(right: 16.0),
                 child: CircleAvatar(
+                    backgroundColor: const Color.fromARGB(255, 194, 235, 47),
+                    foregroundColor: const Color.fromARGB(255, 26, 124, 237),
                     child:
                         Text(_name[0], style: const TextStyle(fontSize: 24.0))),
               ),
-              Expanded(
-                // flex: 1,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(_name, style: Theme.of(context).textTheme.headline5),
-                    Container(
-                      margin: const EdgeInsets.only(top: 5.0),
-                      child: Text(msg),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: const BoxDecoration(
+                    color: Color.fromARGB(255, 162, 229, 244),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16.0),
+                      bottomLeft: Radius.circular(16.0),
                     ),
-                  ],
+                  ),
+                  child: Text(
+                    msg,
+                    style: const TextStyle(fontSize: 16.0),
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         ),
